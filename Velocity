@@ -1,0 +1,103 @@
+//
+//  Velocity.swift
+//  GestureSample
+//
+//  Created by Kaoru Tachibana on 2020/04/27.
+//  Copyright © 2020 Toyship.org. All rights reserved.
+//
+
+import Foundation
+import CoreGraphics
+import UIKit
+
+struct Velocity {
+
+    var vx: CGFloat
+    var vy: CGFloat
+
+    init(){
+        vx = 0.0
+        vy = 0.0
+    }
+
+    init(vx: CGFloat, vy: CGFloat){
+        self.vx = vx
+        self.vy = vy
+    }
+    
+    // 傾きをradianでかえします。
+    var gradient: CGFloat{
+        
+        if vx == 0{
+            if vy > 0{
+                return CGFloat.pi / 2.0
+            }
+            else{
+                return CGFloat.pi * 3.0 / 2.0
+            }
+        }
+        
+        if vy == 0{
+            if vx > 0{
+                return 0
+            }
+            else{
+                return CGFloat.pi
+            }
+        }
+                
+        var calGradient = atan(vy / vx)
+        
+        if calGradient < 0{
+            calGradient += CGFloat.pi
+        }
+
+        return calGradient
+    }
+    
+    private let leftDownAngle: CGFloat = CGFloat.pi * 3.0 / 4.0
+    private let rightDownAngle: CGFloat = CGFloat.pi / 4.0
+    private let angleRangeWidth: CGFloat = 0.25
+    
+    var isSlow: Bool{
+        
+        if abs(vx) < 5.0 || abs(vy) < 5.0{
+            return true
+        }
+        else{
+            return false
+        }
+    }
+
+    var isLeftDown: Bool{
+        
+        let leftDownRange: ClosedRange<CGFloat> = (leftDownAngle - angleRangeWidth)...(leftDownAngle + angleRangeWidth)
+        
+        return leftDownRange.contains(gradient)
+    }
+    
+    var isRightDown: Bool{
+        
+        let rightDownRange: ClosedRange<CGFloat> = (rightDownAngle - angleRangeWidth)...(rightDownAngle + angleRangeWidth)
+        
+        return rightDownRange.contains(gradient)
+    }
+}
+
+extension UITouch{
+    
+    func velocity(in view: UIView?) -> Velocity{
+        
+        let loc = location(in: view)
+        let prevLoc = previousLocation(in: view)
+        
+        let desX = loc.x - prevLoc.x
+        let desY = loc.y - prevLoc.y
+        
+        let velocity = Velocity(vx: desX, vy: desY)
+        
+        return velocity
+        
+    }
+    
+}
