@@ -1,0 +1,170 @@
+//
+//  CrossGestureRecognizer.swift
+//  GestureSample
+//
+//  Created by Kaoru Tachibana on 2020/04/26.
+//  Copyright © 2020 Toyship.org. All rights reserved.
+//
+
+import Foundation
+import UIKit
+
+enum CrossGesturePhases {
+    
+    case notStarted
+    case initialPoint
+    case firstLeftDownStroke
+    case firstRightDownStroke
+    case secondLeftDownStroke
+    case secondRightDownStroke
+}
+
+class CrossGestureRecognizer: UIGestureRecognizer{
+    
+    var strokePhase: CrossGesturePhases = .notStarted
+
+    var initialTouchPoint: CGPoint = CGPoint.zero
+    
+    var trackedTouch: UITouch? = nil
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
+        
+        super.touchesBegan(touches, with: event)
+        
+        if touches.count != 1 {
+            self.state = .failed
+        }
+        
+        if self.trackedTouch == nil {
+            self.trackedTouch = touches.first
+            self.strokePhase = .initialPoint
+            self.initialTouchPoint = (self.trackedTouch?.location(in: self.view))!
+
+        }
+        
+    }
+    
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent) {
+        
+        super.touchesMoved(touches, with: event)
+
+        let newTouch = touches.first
+                
+        if let velocity = newTouch?.velocity(in: self.view){
+            
+            
+            if strokePhase == .initialPoint{
+                
+                if velocity.isRightDown{
+                    strokePhase = .firstRightDownStroke
+                }
+                else if velocity.isLeftDown{
+                    strokePhase = .firstLeftDownStroke
+                }
+                else{
+                    state = .failed
+                }
+                
+            }
+            else if strokePhase == .firstLeftDownStroke{
+                
+                if velocity.isLeftDown{
+                    // continue...
+                }
+                else if velocity.isSlow{
+                    // continue
+                }
+                else if velocity.isRightDown{
+                    strokePhase = .secondRightDownStroke
+                }
+                else{
+                    state = .failed
+                }
+
+            }
+            else if strokePhase == .firstRightDownStroke{
+                
+                if velocity.isRightDown{
+                    // continue...
+                }
+                else if velocity.isSlow{
+                    // continue
+                }
+                else if velocity.isLeftDown{
+                    strokePhase = .secondLeftDownStroke
+                }
+                else{
+                    state = .failed
+                }
+
+            }
+            else if strokePhase == .secondLeftDownStroke{
+                
+                if velocity.isLeftDown{
+                    // continue...
+                }
+                else if velocity.isSlow{
+                    // continue
+                }
+                else{
+                    state = .failed
+                }
+
+            }
+            else if strokePhase == .secondRightDownStroke{
+                
+                if velocity.isRightDown{
+                    // continue...
+                }
+                else if velocity.isSlow{
+                    // continue
+                }
+                else{
+                    state = .failed
+                }
+                
+            }
+            
+        }
+        
+    }
+    
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent) {
+        
+        super.touchesEnded(touches, with: event)
+                
+        if state == .possible && strokePhase == .secondRightDownStroke{
+            state = .recognized
+        }
+        else if state == .possible && strokePhase == .secondLeftDownStroke{
+            state = .recognized
+        }
+        else if state == .possible && strokePhase == .firstLeftDownStroke{
+            // continue
+        }
+        else if state == .possible && strokePhase == .firstRightDownStroke{
+            // continue
+        }
+        
+    }
+    
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent) {
+        
+        super.touchesCancelled(touches, with: event)
+        
+        self.initialTouchPoint = CGPoint.zero
+        self.strokePhase = .notStarted
+        self.trackedTouch = nil
+        self.state = .cancelled
+    }
+     
+    override func reset() {
+        
+        super.reset()
+                
+        self.initialTouchPoint = CGPoint.zero
+        self.strokePhase = .notStarted
+        self.trackedTouch = nil
+    }
+}
+
